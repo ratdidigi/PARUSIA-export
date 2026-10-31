@@ -951,7 +951,7 @@ let customChatCharacters=[];
 let selectedChatBlock=null;
 const THEMES={ivory:{bg:'#f1ead9',text:'#241d16',accent:'#b8383f',border:'#c9bda6'},dark:{bg:'#0b0b0b',text:'#eadfc8',accent:'#d80d1b',border:'#5a4937'},paper:{bg:'#e4d5b4',text:'#261d14',accent:'#8f221f',border:'#9c8663'},red:{bg:'#26090d',text:'#f2dfcf',accent:'#d80d1b',border:'#8d2930'}};
 const state={title:'',source:'PARUSIA',bodyHtml:'',font:'pretendard',align:'left',fontSize:25,lineHeight:1.78,letterSpacing:0,textColor:'#241d16',bgColor:'#f1ead9',bgColor2:'#e3d7c3',bgMode:'solid',bgAngle:135,accent:'#b8383f',highlight:'#e3a09b',quoteColor:'#b8383f',parenColor:'#8a8176',quoteLineColor:'#9a8f80',ratio:'4:5',margin:94,border:1,borderColor:'#c9bda6',theme:'ivory',bgSrc:'',bgScale:100,bgX:50,bgY:50,bgOpacity:30,bgBlur:0,width:1080,height:1350,baseHeight:1350,renderHeight:1350,customWidth:1080,customHeight:1350};
-let selectedFigure=null,savedRange=null;
+let selectedFigure=null,savedRange=null,savedTextRange=null;
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),1300)}
 function fileToData(file){return new Promise((resolve,reject)=>{if(!file)return resolve('');const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})}
 function escapeHtml(str){
@@ -1376,18 +1376,55 @@ $('#richEditor').addEventListener('paste',e=>{
   requestAnimationFrame(updateAutoHeight);
 });
 
-$('#richEditor').addEventListener('keyup',saveSelection);$('#richEditor').addEventListener('mouseup',saveSelection);$('#richEditor').addEventListener('touchend',()=>setTimeout(saveSelection,100));
-function saveSelection(){const sel=window.getSelection();if(!sel||!sel.rangeCount)return;const range=sel.getRangeAt(0);if($('#richEditor').contains(range.commonAncestorContainer))savedRange=range.cloneRange()}
-function restoreSelection(){if(!savedRange)return false;const sel=window.getSelection();sel.removeAllRanges();sel.addRange(savedRange);return true}
+function captureEditorSelection(){
+  const sel=window.getSelection();
+  if(!sel||!sel.rangeCount)return;
+  const range=sel.getRangeAt(0);
+  const editor=$('#richEditor');
+  if(!editor.contains(range.commonAncestorContainer))return;
+  savedRange=range.cloneRange();
+  if(!range.collapsed) savedTextRange=range.cloneRange();
+}
+function saveSelection(){captureEditorSelection()}
+function restoreSelection(){
+  if(!savedRange)return false;
+  try{
+    const sel=window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+    return true;
+  }catch{return false}
+}
+function restoreTextSelection(){
+  if(!savedTextRange || savedTextRange.collapsed)return false;
+  try{
+    const editor=$('#richEditor');
+    if(!editor.contains(savedTextRange.commonAncestorContainer))return false;
+    const sel=window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedTextRange);
+    return !sel.isCollapsed;
+  }catch{return false}
+}
+$('#richEditor').addEventListener('keyup',captureEditorSelection);
+$('#richEditor').addEventListener('mouseup',captureEditorSelection);
+$('#richEditor').addEventListener('touchend',()=>setTimeout(captureEditorSelection,80));
+document.addEventListener('selectionchange',()=>{
+  const sel=window.getSelection();
+  if(!sel||!sel.rangeCount)return;
+  const range=sel.getRangeAt(0);
+  if($('#richEditor').contains(range.commonAncestorContainer)) captureEditorSelection();
+});
 
 function runInlineFormat(command){
-  if(!restoreSelection()){toast('SELECT TEXT FIRST');return}
+  if(!restoreTextSelection()){toast('SELECT TEXT FIRST');return}
   const sel=window.getSelection();
   if(!sel||!sel.rangeCount||sel.isCollapsed){toast('SELECT TEXT FIRST');return}
   const range=sel.getRangeAt(0);
   if(!$('#richEditor').contains(range.commonAncestorContainer)){toast('SELECT TEXT FIRST');return}
   document.execCommand(command,false,null);
-  saveSelection();
+  captureEditorSelection();
+  savedTextRange=null;
   syncBody();
   requestAnimationFrame(updateAutoHeight);
 }
@@ -1396,11 +1433,11 @@ function runInlineFormat(command){
   document.execCommand('styleWithCSS',false,false);
 });
 
-$('#boldBtn').addEventListener('mousedown',e=>e.preventDefault());
-$('#italicBtn').addEventListener('mousedown',e=>e.preventDefault());
-$('#underlineBtn').addEventListener('mousedown',e=>e.preventDefault());
-$('#strikeBtn').addEventListener('mousedown',e=>e.preventDefault());
-$('#quoteBtn').addEventListener('mousedown',e=>e.preventDefault());
+$('#boldBtn').addEventListener('mousedown',e=>{captureEditorSelection();e.preventDefault()});
+$('#italicBtn').addEventListener('mousedown',e=>{captureEditorSelection();e.preventDefault()});
+$('#underlineBtn').addEventListener('mousedown',e=>{captureEditorSelection();e.preventDefault()});
+$('#strikeBtn').addEventListener('mousedown',e=>{captureEditorSelection();e.preventDefault()});
+$('#quoteBtn').addEventListener('mousedown',e=>{captureEditorSelection();e.preventDefault()});
 
 $('#boldBtn').onclick=()=>runInlineFormat('bold');
 $('#italicBtn').onclick=()=>runInlineFormat('italic');
@@ -1408,7 +1445,7 @@ $('#underlineBtn').onclick=()=>runInlineFormat('underline');
 $('#strikeBtn').onclick=()=>runInlineFormat('strikeThrough');
 
 $('#quoteBtn').onclick=()=>{
-  if(!restoreSelection()){toast('SELECT TEXT FIRST');return}
+  if(!restoreTextSelection()){toast('SELECT TEXT FIRST');return}
   const sel=window.getSelection();
   if(!sel||!sel.rangeCount||sel.isCollapsed){toast('SELECT TEXT FIRST');return}
   const range=sel.getRangeAt(0);
@@ -1430,6 +1467,7 @@ $('#quoteBtn').onclick=()=>{
     after.collapse(true);
     sel.addRange(after);
     savedRange=after.cloneRange();
+    savedTextRange=null;
 
     syncBody();
     requestAnimationFrame(updateAutoHeight);
@@ -1441,11 +1479,11 @@ $('#quoteBtn').onclick=()=>{
 };
 
 
-$('#censorBtn').addEventListener('mousedown',e=>e.preventDefault());
-$('#uncensorBtn').addEventListener('mousedown',e=>e.preventDefault());
+$('#censorBtn').addEventListener('mousedown',e=>{captureEditorSelection();e.preventDefault()});
+$('#uncensorBtn').addEventListener('mousedown',e=>{captureEditorSelection();e.preventDefault()});
 
 $('#censorBtn').addEventListener('click',()=>{
-  if(!restoreSelection()){toast('SELECT TEXT FIRST');return}
+  if(!restoreTextSelection()){toast('SELECT TEXT FIRST');return}
   const sel=window.getSelection();
   if(!sel||!sel.rangeCount||sel.isCollapsed){toast('SELECT TEXT FIRST');return}
   const range=sel.getRangeAt(0);
@@ -1459,14 +1497,14 @@ $('#censorBtn').addEventListener('click',()=>{
     sel.removeAllRanges();
     const after=document.createRange();
     after.setStartAfter(span);after.collapse(true);
-    sel.addRange(after);savedRange=after.cloneRange();
+    sel.addRange(after);savedRange=after.cloneRange();savedTextRange=null;
     syncBody();requestAnimationFrame(updateAutoHeight);
     toast('CENSORED');
   }catch(err){console.error(err);toast('CENSOR FAILED')}
 });
 
 $('#uncensorBtn').addEventListener('click',()=>{
-  if(!restoreSelection()){toast('SELECT CENSORED TEXT');return}
+  if(!(restoreTextSelection()||restoreSelection())){toast('SELECT CENSORED TEXT');return}
   const sel=window.getSelection();
   if(!sel||!sel.rangeCount){toast('SELECT CENSORED TEXT');return}
   const range=sel.getRangeAt(0);
@@ -1484,9 +1522,9 @@ $('#uncensorBtn').addEventListener('click',()=>{
   toast('UNCENSORED');
 });
 
-$('#highlightBtn').addEventListener('mousedown',e=>e.preventDefault());
+$('#highlightBtn').addEventListener('mousedown',e=>{captureEditorSelection();e.preventDefault()});
 $('#highlightBtn').addEventListener('click',()=>{
-  if(!restoreSelection()){toast('SELECT TEXT FIRST');return}
+  if(!restoreTextSelection()){toast('SELECT TEXT FIRST');return}
   const sel=window.getSelection();
   if(!sel||sel.isCollapsed){toast('SELECT TEXT FIRST');return}
   const range=sel.getRangeAt(0);
@@ -1501,6 +1539,7 @@ $('#highlightBtn').addEventListener('click',()=>{
     after.setStartAfter(mark);after.collapse(true);
     sel.addRange(after);
     savedRange=after.cloneRange();
+    savedTextRange=null;
     syncBody();
     requestAnimationFrame(updateAutoHeight);
     toast('HIGHLIGHT APPLIED');
