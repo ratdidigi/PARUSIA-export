@@ -709,7 +709,7 @@ body[data-bg-mode="gradient"] .gradient-only{display:block}
     <div class="editor-head">
       <div class="eyebrow">01 / EXCERPT CONTROL</div>
       <h2>발췌 편집</h2>
-      <p>왼쪽 편집기에서만 내용을 수정합니다. 오른쪽은 저장 결과를 그대로 보여주는 읽기 전용 미리보기입니다.</p>
+      <p></p>
     </div>
 
     <div class="editor-tabs" role="tablist" aria-label="편집 메뉴">
@@ -743,13 +743,13 @@ body[data-bg-mode="gradient"] .gradient-only{display:block}
         <button class="tool-btn" id="dividerBtn">DIVIDER</button>
         <label class="tool-btn" style="display:inline-grid;place-items:center">INSERT IMAGE<input id="inlineImageUpload" type="file" accept="image/*" hidden></label>
       </div>
-      <div id="richEditor" class="rich-editor" contenteditable="true" spellcheck="false">사람들은 오래도록 신을 믿었다.<br>그리고 이제, 믿어 온 것들이 현실의 법칙을 얻기 시작했다.<br><br>중요한 것은 형상이 아니다. 그것이 강제하는 규칙이다.</div>
+      <div id="richEditor" class="rich-editor" contenteditable="true" spellcheck="false"></div>
       <div id="imageEditRow" class="image-edit-row">
         <div class="range-row"><input id="inlineImageWidth" type="range" min="20" max="100" value="70"><div class="mini-value" id="inlineImageWidthVal">70%</div></div>
         <button class="btn" id="imageAlignBtn">ALIGN</button>
         <button class="btn red" id="removeInlineImageBtn">REMOVE</button>
       </div>
-      <div class="help" style="margin-top:9px">텍스트를 드래그 선택한 뒤 HIGHLIGHT를 누르면 형광펜이 적용됩니다. DIVIDER로 구분선을 넣고, 본문 중간에 커서를 둔 뒤 INSERT IMAGE로 이미지를 삽입할 수 있습니다.</div>
+      <div class="help" style="margin-top:9px">텍스트를 드래그 선택한 뒤 HIGHLIGHT를 누르면 형광펜이 적용됩니다.</div>
     </section>
 
 
@@ -875,11 +875,11 @@ body[data-bg-mode="gradient"] .gradient-only{display:block}
   </aside>
 
   <section class="preview-pane">
-    <div class="preview-head"><span>LIVE PREVIEW / READ ONLY</span><div class="preview-meta"><span id="previewSize">1080 × 1350</span><span>PNG SOURCE</span></div></div>
+    <div class="preview-head"><span>LIVE PREVIEW</span><div class="preview-meta"><span id="previewSize">1080 × 1350</span><span>PNG SOURCE</span></div></div>
     <div class="preview-viewport" id="previewViewport"><div class="stage-anchor" id="stageAnchor"><div class="stage" id="stage">
       <div class="stage-bg-color" id="stageBgColor"></div><div class="stage-bg-img" id="stageBgImg"></div><div class="stage-overlay"></div><div class="stage-grid"></div>
       <article class="excerpt-card" id="excerptCard">
-        <div class="meta-top"><div class="title-wrap"><div class="doc-kicker">PARUSIA / EXCERPT FILE</div><h1 class="doc-title" id="previewTitle">발췌 기록</h1></div><div class="doc-source" id="previewSource">PARUSIA / CHAT EXCERPT</div></div>
+        <div class="meta-top"><div class="title-wrap"><div class="doc-kicker"></div><h1 class="doc-title" id="previewTitle">발췌 기록</h1></div><div class="doc-source" id="previewSource">PARUSIA / CHAT EXCERPT</div></div>
         <div class="quote-mark">“</div>
         <div class="excerpt-content" id="previewContent"></div>
       </article>
@@ -891,7 +891,7 @@ body[data-bg-mode="gradient"] .gradient-only{display:block}
 const $=(s,p=document)=>p.querySelector(s),$$=(s,p=document)=>[...p.querySelectorAll(s)];
 const ratios={'1:1':[1080,1080],'4:5':[1080,1350],'3:4':[1080,1440],'9:16':[1080,1920],'16:9':[1600,900]};
 const fontMap={pretendard:'Pretendard, "Noto Sans KR", sans-serif',notoSerif:'"Noto Serif KR", serif',notoSans:'"Noto Sans KR", sans-serif',nanumMyeongjo:'"Nanum Myeongjo", serif',gowunBatang:'"Gowun Batang", serif',mono:'"IBM Plex Mono", monospace'};
-const DEFAULT_CHAT_CHARACTERS=[{"id":"sable","name":"SABLE","avatar":"images/chat_sable.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"kain","name":"KAIN","avatar":"images/chat_kain.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"ordo","name":"ORDO","avatar":"images/chat_ordo.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"astra","name":"ASTRA","avatar":"images/chat_astra.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"mori","name":"MORI","avatar":"images/chat_mori.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"naga","name":"NAGA","avatar":"images/chat_naga.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"andrea","name":"ANDREA","avatar":"images/chat_andrea.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"johannes","name":"JOHANNES","avatar":"images/chat_johannes.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"nathan","name":"NATHAN","avatar":"images/chat_nathan.png","bubble":"#b3131d","text":"#f7eee0","builtin":true}];
+const DEFAULT_CHAT_CHARACTERS=[{"id":"sable","name":"SABLE","avatar":"images/chat_sable.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"cain","name":"CAIN","avatar":"images/chat_cain.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"ordo","name":"ORDO","avatar":"images/chat_ordo.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"astra","name":"ASTRA","avatar":"images/chat_astra.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"mori","name":"MORI","avatar":"images/chat_mori.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"naga","name":"NAGA","avatar":"images/chat_naga.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"andrea","name":"ANDREA","avatar":"images/chat_andrea.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"johannes","name":"JOHANNES","avatar":"images/chat_johannes.png","bubble":"#e8d8b5","text":"#211a13","builtin":true},{"id":"nathan","name":"NATHAN","avatar":"images/chat_nathan.png","bubble":"#b3131d","text":"#f7eee0","builtin":true}];
 let customChatCharacters=[];
 let selectedChatBlock=null;
 const THEMES={ivory:{bg:'#f1ead9',text:'#241d16',accent:'#b8383f',border:'#c9bda6'},dark:{bg:'#0b0b0b',text:'#eadfc8',accent:'#d80d1b',border:'#5a4937'},paper:{bg:'#e4d5b4',text:'#261d14',accent:'#8f221f',border:'#9c8663'},red:{bg:'#26090d',text:'#f2dfcf',accent:'#d80d1b',border:'#8d2930'}};
