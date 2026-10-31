@@ -693,6 +693,61 @@ body[data-bg-mode="gradient"] .gradient-only{display:block}
 }
 </style>
 
+
+<style id="final-chat-drag-fix">
+/* compact chat stack */
+.rich-editor .chat-block,
+.excerpt-content .chat-block{
+  margin:.42em 0!important;
+}
+.rich-editor .chat-block + .chat-block,
+.excerpt-content .chat-block + .chat-block{
+  margin-top:.18em!important;
+}
+
+/* editor-only drag/reorder affordance */
+.rich-editor .chat-block{
+  position:relative;
+  cursor:grab!important;
+}
+.rich-editor .chat-block:active{cursor:grabbing!important}
+.rich-editor .chat-block.dragging{
+  opacity:.45;
+  outline:1px dashed #9f1720!important;
+}
+.rich-editor .chat-block.drag-over-before:before,
+.rich-editor .chat-block.drag-over-after:after{
+  content:"";
+  position:absolute;
+  left:0;right:0;
+  height:2px;
+  background:#b31520;
+  z-index:10;
+}
+.rich-editor .chat-block.drag-over-before:before{top:-6px}
+.rich-editor .chat-block.drag-over-after:after{bottom:-6px}
+
+.rich-editor .chat-edit-delete{
+  position:absolute;
+  right:-6px;
+  top:-8px;
+  width:22px;height:22px;
+  border:1px solid #b78f8f;
+  border-radius:50%;
+  background:#fff8f0;
+  color:#a51620;
+  font:700 13px/20px Pretendard,sans-serif;
+  padding:0;
+  display:grid;
+  place-items:center;
+  z-index:30;
+  cursor:pointer;
+}
+.rich-editor .chat-block[data-align="right"] .chat-edit-delete{
+  right:auto;left:-6px;
+}
+</style>
+
 </head>
 <body>
 <header class="topbar">
@@ -918,8 +973,9 @@ function sanitizeEditorHtml(){
   clone.querySelectorAll('blockquote.editor-quote').forEach(q=>{
     q.style.setProperty('--quote-line',state.quoteLineColor);
   });
+  clone.querySelectorAll('.chat-edit-delete').forEach(el=>el.remove());
   clone.querySelectorAll('.chat-block').forEach(block=>{
-    block.classList.remove('selected');
+    block.classList.remove('selected','dragging','drag-over-before','drag-over-after');
     block.removeAttribute('contenteditable');
     block.setAttribute('draggable','false');
     block.querySelectorAll('img').forEach(img=>img.setAttribute('draggable','false'));
@@ -1010,7 +1066,7 @@ function buildChatBlock(data){
   const block=document.createElement('div');
   block.className='chat-block';
   block.setAttribute('contenteditable','false');
-  block.setAttribute('draggable','false');
+  block.setAttribute('draggable','true');
   renderChatBlock(block,data);
   return block;
 }
@@ -1039,6 +1095,7 @@ function updateChatBlock(block,data){
   renderChatBlock(block,data);
 }
 function selectChatBlock(block){
+  $$('#richEditor .chat-edit-delete').forEach(el=>el.remove());
   $$('#richEditor .chat-block.selected').forEach(el=>el.classList.remove('selected'));
   selectedChatBlock=block||null;
   if(!block){
@@ -1046,6 +1103,7 @@ function selectChatBlock(block){
     return;
   }
   block.classList.add('selected');
+  block.setAttribute('draggable','true');
   setChatForm({
     name:block.dataset.name||'',
     avatar:block.dataset.avatar||'',
@@ -1055,27 +1113,60 @@ function selectChatBlock(block){
     tail:block.dataset.tail||'left',
     message:block.querySelector('.chat-bubble')?.textContent||''
   });
+  const del=document.createElement('button');
+  del.type='button';
+  del.className='chat-edit-delete';
+  del.textContent='×';
+  del.title='말풍선 삭제';
+  del.setAttribute('contenteditable','false');
+  del.addEventListener('mousedown',e=>e.stopPropagation());
+  del.addEventListener('click',e=>{
+    e.preventDefault();e.stopPropagation();
+    const target=block;
+    if(selectedChatBlock===target) selectedChatBlock=null;
+    target.remove();
+    $('#removeChatBtn').disabled=true;
+    syncBody();
+    requestAnimationFrame(updateAutoHeight);
+    toast('CHAT REMOVED');
+  });
+  block.appendChild(del);
   $('#removeChatBtn').disabled=false;
 }
 function insertNodeAtSavedRange(node){
   restoreSelection();
   const sel=window.getSelection();
+  const isChat=node.classList?.contains('chat-block');
+  const anchorNode=isChat?document.createTextNode('\u200B'):document.createElement('br');
   if(sel&&sel.rangeCount&&$('#richEditor').contains(sel.getRangeAt(0).commonAncestorContainer)){
     const r=sel.getRangeAt(0);
     r.deleteContents();
     r.insertNode(node);
-    const br=document.createElement('br');
-    node.after(br);
-    r.setStartAfter(br);
+    node.after(anchorNode);
+    r.setStartAfter(anchorNode);
     r.collapse(true);
     sel.removeAllRanges();sel.addRange(r);
     savedRange=r.cloneRange();
   }else{
-    $('#richEditor').append(node,document.createElement('br'));
+    $('#richEditor').append(node,anchorNode);
   }
 }
 
+function cleanupChatSpacing(){
+  const editor=$('#richEditor');
+  [...editor.childNodes].forEach(node=>{
+    if(node.nodeType===3 && node.textContent==='\u200B'){
+      const prev=node.previousSibling,next=node.nextSibling;
+      if(prev?.classList?.contains('chat-block') && next?.classList?.contains('chat-block')) node.remove();
+    }
+    if(node.nodeName==='BR'){
+      const prev=node.previousSibling,next=node.nextSibling;
+      if(prev?.classList?.contains('chat-block') && next?.classList?.contains('chat-block')) node.remove();
+    }
+  });
+}
 function syncBody(){
+  cleanupChatSpacing();
   state.bodyHtml=sanitizeEditorHtml();
   const preview=$('#previewContent');
   preview.innerHTML=state.bodyHtml;
@@ -1431,11 +1522,49 @@ $('#clearHighlightBtn').onclick=()=>{
 $('#inlineImageUpload').addEventListener('change',async e=>{const src=await fileToData(e.target.files[0]);if(!src)return;restoreSelection();const fig=document.createElement('figure');fig.className='inline-image';fig.style.width='70%';fig.innerHTML=`<img src="${src}" alt="">`;const sel=window.getSelection();if(sel&&sel.rangeCount&&$('#richEditor').contains(sel.getRangeAt(0).commonAncestorContainer)){const r=sel.getRangeAt(0);r.deleteContents();r.insertNode(fig);r.setStartAfter(fig);r.collapse(true);sel.removeAllRanges();sel.addRange(r)}else $('#richEditor').appendChild(fig);selectFigure(fig);syncBody();requestAnimationFrame(updateAutoHeight);e.target.value=''});
 function selectFigure(fig){$$('#richEditor figure.inline-image.selected').forEach(f=>f.classList.remove('selected'));selectedFigure=fig;if(fig){fig.classList.add('selected');$('#imageEditRow').classList.add('show');const w=parseFloat(fig.style.width)||70;$('#inlineImageWidth').value=w;$('#inlineImageWidthVal').textContent=Math.round(w)+'%'}else $('#imageEditRow').classList.remove('show')}
 
+
+
+
+let draggedChatBlock=null;
+function clearChatDragMarks(){
+  $$('#richEditor .chat-block').forEach(b=>b.classList.remove('drag-over-before','drag-over-after'));
+}
 $('#richEditor').addEventListener('dragstart',e=>{
-  if(e.target.closest('.chat-block')){
-    e.preventDefault();
-    return false;
-  }
+  const block=e.target.closest('.chat-block');
+  if(!block)return;
+  draggedChatBlock=block;
+  block.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+  try{e.dataTransfer.setData('text/plain','PARUSIA_CHAT_BLOCK')}catch{}
+});
+$('#richEditor').addEventListener('dragover',e=>{
+  if(!draggedChatBlock)return;
+  const target=e.target.closest('.chat-block');
+  if(!target||target===draggedChatBlock)return;
+  e.preventDefault();
+  clearChatDragMarks();
+  const rect=target.getBoundingClientRect();
+  const before=e.clientY < rect.top + rect.height/2;
+  target.classList.add(before?'drag-over-before':'drag-over-after');
+});
+$('#richEditor').addEventListener('drop',e=>{
+  if(!draggedChatBlock)return;
+  const target=e.target.closest('.chat-block');
+  if(!target||target===draggedChatBlock){clearChatDragMarks();return}
+  e.preventDefault();
+  const rect=target.getBoundingClientRect();
+  const before=e.clientY < rect.top + rect.height/2;
+  if(before) target.before(draggedChatBlock);
+  else target.after(draggedChatBlock);
+  clearChatDragMarks();
+  syncBody();
+  requestAnimationFrame(updateAutoHeight);
+  toast('CHAT MOVED');
+});
+$('#richEditor').addEventListener('dragend',()=>{
+  if(draggedChatBlock)draggedChatBlock.classList.remove('dragging');
+  draggedChatBlock=null;
+  clearChatDragMarks();
 });
 
 $('#richEditor').addEventListener('click',e=>{
@@ -1495,6 +1624,7 @@ $('#removeChatBtn').addEventListener('click',()=>{
   if(!selectedChatBlock)return;
   const block=selectedChatBlock;
   selectedChatBlock=null;
+  block.querySelector('.chat-edit-delete')?.remove();
   block.remove();
   $('#removeChatBtn').disabled=true;
   syncBody();
