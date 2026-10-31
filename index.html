@@ -764,6 +764,24 @@ body[data-bg-mode="gradient"] .gradient-only{display:block}
 }
 </style>
 
+
+<style id="enter-lineheight-safe-fix">
+/* Let the browser handle Enter normally. Neutralize paragraph/block margins
+   so <div>/<p> line breaks render with the same configured line-height. */
+.rich-editor > div,
+.rich-editor > p,
+.excerpt-content > div:not(.chat-block),
+.excerpt-content > p{
+  margin:0!important;
+  padding:0!important;
+  line-height:inherit!important;
+}
+.rich-editor br,
+.excerpt-content br{
+  line-height:inherit!important;
+}
+</style>
+
 </head>
 <body>
 <header class="topbar">
@@ -1384,32 +1402,6 @@ $('#dividerBtn').addEventListener('click',()=>{
 });
 
 
-$('#richEditor').addEventListener('keydown',e=>{
-  if(e.key!=='Enter') return;
-  const sel=window.getSelection();
-  if(!sel||!sel.rangeCount) return;
-  const range=sel.getRangeAt(0);
-  if(!$('#richEditor').contains(range.commonAncestorContainer)) return;
-  if(range.commonAncestorContainer.parentElement?.closest?.('.chat-block,figure.inline-image')) return;
-
-  e.preventDefault();
-  // insertLineBreak keeps all ordinary Enter presses as <br> instead of
-  // browser-dependent <div>/<p> blocks.
-  if(document.queryCommandSupported?.('insertLineBreak')){
-    document.execCommand('insertLineBreak',false,null);
-  }else{
-    range.deleteContents();
-    const br=document.createElement('br');
-    range.insertNode(br);
-    range.setStartAfter(br);
-    range.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-  saveSelection?.();
-  syncBody();
-  requestAnimationFrame(updateAutoHeight);
-});
 
 $('#richEditor').addEventListener('input',()=>{syncBody();requestAnimationFrame(updateAutoHeight)});
 
