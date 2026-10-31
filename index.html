@@ -806,6 +806,46 @@ body[data-bg-mode="gradient"] .gradient-only{display:block}
 }
 </style>
 
+
+<style id="final-image-align-no-caption">
+.rich-editor figure.inline-image,
+.excerpt-content figure.inline-image{
+  display:block!important;
+  position:relative!important;
+  max-width:100%!important;
+  text-align:initial!important;
+  margin-top:1.05em!important;
+  margin-bottom:1.05em!important;
+}
+.rich-editor figure.inline-image[data-align="left"],
+.excerpt-content figure.inline-image[data-align="left"]{
+  margin-left:0!important;
+  margin-right:auto!important;
+}
+.rich-editor figure.inline-image[data-align="center"],
+.excerpt-content figure.inline-image[data-align="center"]{
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.rich-editor figure.inline-image[data-align="right"],
+.excerpt-content figure.inline-image[data-align="right"]{
+  margin-left:auto!important;
+  margin-right:0!important;
+}
+.rich-editor figure.inline-image img,
+.excerpt-content figure.inline-image img{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  margin:0!important;
+  object-fit:contain!important;
+}
+.rich-editor figure.inline-image figcaption,
+.excerpt-content figure.inline-image figcaption{
+  display:none!important;
+}
+</style>
+
 </head>
 <body>
 <header class="topbar">
@@ -1024,7 +1064,6 @@ function escapeHtml(str){
 function sanitizeEditorHtml(){
   const clone=$('#richEditor').cloneNode(true);
   clone.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));
-  clone.querySelectorAll('figcaption').forEach(el=>el.remove());
   clone.querySelectorAll('figure.inline-image').forEach(fig=>{
     if(!fig.querySelector('img')) fig.remove();
   });
@@ -1645,7 +1684,11 @@ $('#inlineImageUpload').addEventListener('change',async e=>{
   fig.style.width='70%';
   const defaultAlign=(state.align==='center'||state.align==='right')?state.align:'left';
   fig.dataset.align=defaultAlign;
-  fig.innerHTML=`<img src="${src}" alt="">`;
+  const img=document.createElement('img');
+  img.src=src;
+  img.alt='';
+  img.draggable=false;
+  fig.appendChild(img);
   const sel=window.getSelection();
   if(sel&&sel.rangeCount&&$('#richEditor').contains(sel.getRangeAt(0).commonAncestorContainer)){
     const r=sel.getRangeAt(0);
@@ -1663,7 +1706,21 @@ $('#inlineImageUpload').addEventListener('change',async e=>{
   requestAnimationFrame(updateAutoHeight);
   e.target.value='';
 });
-function selectFigure(fig){$$('#richEditor figure.inline-image.selected').forEach(f=>f.classList.remove('selected'));selectedFigure=fig;if(fig){if(!fig.dataset.align)fig.dataset.align='left';fig.classList.add('selected');$('#imageEditRow').classList.add('show');const w=parseFloat(fig.style.width)||70;$('#inlineImageWidth').value=w;$('#inlineImageWidthVal').textContent=Math.round(w)+'%'}else $('#imageEditRow').classList.remove('show')}
+function selectFigure(fig){
+  $$('#richEditor figure.inline-image.selected').forEach(f=>f.classList.remove('selected'));
+  selectedFigure=fig;
+  if(fig){
+    if(!fig.dataset.align) fig.dataset.align='left';
+    fig.classList.add('selected');
+    $('#imageEditRow').classList.add('show');
+    const w=parseFloat(fig.style.width)||70;
+    $('#inlineImageWidth').value=w;
+    $('#inlineImageWidthVal').textContent=Math.round(w)+'%';
+    $('#imageAlignBtn').textContent='ALIGN: '+fig.dataset.align.toUpperCase();
+  }else{
+    $('#imageEditRow').classList.remove('show');
+  }
+}
 
 
 
@@ -1722,8 +1779,7 @@ $('#imageAlignBtn').onclick=()=>{
   const cur=selectedFigure.dataset.align||'left';
   const next=cur==='left'?'center':cur==='center'?'right':'left';
   selectedFigure.dataset.align=next;
-  selectedFigure.style.marginLeft='';
-  selectedFigure.style.marginRight='';
+  $('#imageAlignBtn').textContent='ALIGN: '+next.toUpperCase();
   syncBody();
   requestAnimationFrame(updateAutoHeight);
   toast('IMAGE '+next.toUpperCase());
@@ -1733,7 +1789,6 @@ $('#removeInlineImageBtn').onclick=()=>{
   const next=selectedFigure.nextSibling;
   selectedFigure.remove();
   if(next && next.nodeType===3 && !next.textContent.trim()) next.remove();
-  $('#richEditor').querySelectorAll('figcaption').forEach(el=>el.remove());
   selectedFigure=null;
   $('#imageEditRow').classList.remove('show');
   syncBody();
