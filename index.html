@@ -879,7 +879,7 @@ body[data-bg-mode="gradient"] .gradient-only{display:block}
     <div class="preview-viewport" id="previewViewport"><div class="stage-anchor" id="stageAnchor"><div class="stage" id="stage">
       <div class="stage-bg-color" id="stageBgColor"></div><div class="stage-bg-img" id="stageBgImg"></div><div class="stage-overlay"></div><div class="stage-grid"></div>
       <article class="excerpt-card" id="excerptCard">
-        <div class="meta-top"><div class="title-wrap"><div class="doc-kicker"></div><h1 class="doc-title" id="previewTitle">발췌 기록</h1></div><div class="doc-source" id="previewSource">PARUSIA / CHAT EXCERPT</div></div>
+        <div class="meta-top"><div class="title-wrap"><div class="doc-kicker"></div><h1 class="doc-title" id="previewTitle"></h1></div><div class="doc-source" id="previewSource">PARUSIA</div></div>
         <div class="quote-mark">“</div>
         <div class="excerpt-content" id="previewContent"></div>
       </article>
@@ -895,7 +895,7 @@ const DEFAULT_CHAT_CHARACTERS=[{"id":"sable","name":"SABLE","avatar":"images/cha
 let customChatCharacters=[];
 let selectedChatBlock=null;
 const THEMES={ivory:{bg:'#f1ead9',text:'#241d16',accent:'#b8383f',border:'#c9bda6'},dark:{bg:'#0b0b0b',text:'#eadfc8',accent:'#d80d1b',border:'#5a4937'},paper:{bg:'#e4d5b4',text:'#261d14',accent:'#8f221f',border:'#9c8663'},red:{bg:'#26090d',text:'#f2dfcf',accent:'#d80d1b',border:'#8d2930'}};
-const state={title:'발췌 기록',source:'PARUSIA / CHAT EXCERPT',bodyHtml:'',font:'pretendard',align:'left',fontSize:25,lineHeight:1.78,letterSpacing:0,textColor:'#241d16',bgColor:'#f1ead9',bgColor2:'#e3d7c3',bgMode:'solid',bgAngle:135,accent:'#b8383f',highlight:'#e3a09b',quoteColor:'#b8383f',parenColor:'#8a8176',quoteLineColor:'#9a8f80',ratio:'4:5',margin:94,border:1,borderColor:'#c9bda6',theme:'ivory',bgSrc:'',bgScale:100,bgX:50,bgY:50,bgOpacity:30,bgBlur:0,width:1080,height:1350,baseHeight:1350,renderHeight:1350,customWidth:1080,customHeight:1350};
+const state={title:'',source:'PARUSIA',bodyHtml:'',font:'pretendard',align:'left',fontSize:25,lineHeight:1.78,letterSpacing:0,textColor:'#241d16',bgColor:'#f1ead9',bgColor2:'#e3d7c3',bgMode:'solid',bgAngle:135,accent:'#b8383f',highlight:'#e3a09b',quoteColor:'#b8383f',parenColor:'#8a8176',quoteLineColor:'#9a8f80',ratio:'4:5',margin:94,border:1,borderColor:'#c9bda6',theme:'ivory',bgSrc:'',bgScale:100,bgX:50,bgY:50,bgOpacity:30,bgBlur:0,width:1080,height:1350,baseHeight:1350,renderHeight:1350,customWidth:1080,customHeight:1350};
 let selectedFigure=null,savedRange=null;
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),1300)}
 function fileToData(file){return new Promise((resolve,reject)=>{if(!file)return resolve('');const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})}
