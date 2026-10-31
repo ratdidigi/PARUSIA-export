@@ -846,6 +846,19 @@ body[data-bg-mode="gradient"] .gradient-only{display:block}
 }
 </style>
 
+
+<style id="image-caret-fix">
+.rich-editor .image-caret-line{
+  min-height:1.8em;
+  margin:0!important;
+  padding:0!important;
+  text-align:inherit!important;
+}
+.rich-editor .image-caret-line:empty:before{
+  content:"B";
+}
+</style>
+
 </head>
 <body>
 <header class="topbar">
@@ -1067,6 +1080,7 @@ function sanitizeEditorHtml(){
   clone.querySelectorAll('figure.inline-image').forEach(fig=>{
     if(!fig.querySelector('img')) fig.remove();
   });
+  clone.querySelectorAll('.image-caret-line').forEach(p=>{if(!p.textContent.replace(/\u200B/g,'').trim()&&!p.querySelector('br')) p.remove();else p.classList.remove('image-caret-line')});
   clone.querySelectorAll('blockquote.editor-quote').forEach(q=>{
     q.style.setProperty('--quote-line',state.quoteLineColor);
   });
@@ -1689,18 +1703,31 @@ $('#inlineImageUpload').addEventListener('change',async e=>{
   img.alt='';
   img.draggable=false;
   fig.appendChild(img);
+
+  // Always create a real editable line after the image so the figure can never trap the caret.
+  const after=document.createElement('div');
+  after.className='image-caret-line';
+  after.appendChild(document.createElement('br'));
+
   const sel=window.getSelection();
   if(sel&&sel.rangeCount&&$('#richEditor').contains(sel.getRangeAt(0).commonAncestorContainer)){
     const r=sel.getRangeAt(0);
     r.deleteContents();
     r.insertNode(fig);
-    r.setStartAfter(fig);
-    r.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(r);
+    fig.after(after);
   }else{
-    $('#richEditor').appendChild(fig);
+    $('#richEditor').append(fig,after);
   }
+
+  // Put caret inside the editable line, not after the non-editable image block.
+  const caret=document.createRange();
+  caret.setStart(after,0);
+  caret.collapse(true);
+  sel?.removeAllRanges();
+  sel?.addRange(caret);
+  savedRange=caret.cloneRange();
+  $('#richEditor').focus();
+
   selectFigure(fig);
   syncBody();
   requestAnimationFrame(updateAutoHeight);
@@ -1788,7 +1815,8 @@ $('#removeInlineImageBtn').onclick=()=>{
   if(!selectedFigure)return;
   const next=selectedFigure.nextSibling;
   selectedFigure.remove();
-  if(next && next.nodeType===3 && !next.textContent.trim()) next.remove();
+  if(next?.nodeType===1 && next.classList?.contains('image-caret-line') && !next.textContent.trim()) next.remove();
+  else if(next && next.nodeType===3 && !next.textContent.trim()) next.remove();
   selectedFigure=null;
   $('#imageEditRow').classList.remove('show');
   syncBody();
